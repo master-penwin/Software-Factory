@@ -1,6 +1,6 @@
 This is a general-purpose software factory: a reusable workflow that turns an idea into a published product. This repo holds only the workflow. Every product lives in its own repo.
 
-Install it in Claude Code with `/plugin marketplace add master-penwin/software-factory`, then `/plugin install factory@software-factory`.
+Install it in Claude Code with `/plugin marketplace add master-penwin/Software-Factory`, then `/plugin install factory@software-factory`.
 
 ## Principles
 1. Every file opens with one plain line saying what it is, and holds only the bare minimum.
