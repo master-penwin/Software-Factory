@@ -1,0 +1,252 @@
+<!-- looks/painterly.html — painterly/soft visual variant of index.html. Visual layer only; game logic identical. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Odd One Out</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f1e6d0;      /* page */
+    --tile: #fbf4e6;       /* tile background (palette contrast is measured against this) */
+    --ink: #3b2a1e;        /* sepia ink */
+    --ink-soft: #7a6450;
+    --wash: #e3d3b4;
+    --ok: #4f7a3a;
+    --bad: #b8322a;
+    --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    --fibres: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .04' numOctaves='4'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .4 0 0 0 0 .25 0 0 0 .5 -.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--paper); }
+  body { margin: 0; font: 18px/1.4 'Fraunces', Georgia, serif; color: var(--ink);
+    background: var(--noise), var(--fibres),
+      radial-gradient(120% 80% at 50% 30%, #f8efdc 0%, var(--paper) 60%, #e6d5b5 100%);
+    background-blend-mode: multiply, multiply, normal; }
+  main { max-width: 480px; margin: 0 auto; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+  .screen { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; }
+  .screen.on { display: flex; }
+  h1 { margin: 0; font-weight: 700; font-size: 44px; line-height: 1.02; letter-spacing: -0.01em; font-variation-settings: 'opsz' 144; }
+  h1 em { font-style: italic; font-weight: 500; color: var(--bad); }
+  p { margin: 0; }
+  .lede { font-style: italic; color: var(--ink-soft); font-size: 19px; max-width: 18em; }
+
+  /* hand-made button: ink wash blob */
+  button.big { font: inherit; font-weight: 700; font-size: 22px; letter-spacing: .02em; padding: 16px 52px; min-height: 56px; border: 0;
+    color: #fbf4e6; background: var(--ink); border-radius: 46% 54% 42% 58% / 60% 44% 56% 40%;
+    box-shadow: inset 0 -4px 0 rgba(0,0,0,.18), 0 6px 14px -6px rgba(59,42,30,.5); filter: url(#rough-ui); cursor: pointer; }
+  button.big:active { transform: translateY(2px) scale(.98); }
+
+  /* start screen */
+  #start { gap: 28px; }
+  .vignette { width: 220px; height: 220px; }
+  .vignette svg { width: 100%; height: 100%; overflow: visible; }
+  .howto { font-size: 15px; color: var(--ink-soft); max-width: 20em; }
+
+  /* round */
+  #round { justify-content: flex-start; gap: 18px; padding-top: 3vh; }
+  .hud { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 4px 4px 0; }
+  .hud .lab { display: block; font-size: 13px; font-style: italic; color: var(--ink-soft); letter-spacing: .04em; }
+  .hud b { font-size: 64px; line-height: 1; font-variant-numeric: lining-nums tabular-nums; font-variation-settings: 'opsz' 144; }
+  .hud .best { text-align: right; }
+  .hud .best b { font-size: 30px; color: var(--ink-soft); }
+  /* timer: a brush stroke that dries up */
+  .bar { width: 100%; height: 12px; position: relative; border-radius: 6px 9px 7px 10px; background: rgba(122,100,80,.16); overflow: hidden; }
+  .bar div { height: 100%; width: 100%; background: linear-gradient(90deg, #8c3a22, var(--bad) 70%, #c9573b);
+    border-radius: 3px 10px 8px 4px / 6px 5px 7px 6px; background-blend-mode: multiply;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,.15), inset 0 2px 0 rgba(255,255,255,.18); }
+  /* grid sits low, in thumb reach; the space above holds the score */
+  #stage { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 7vh; }
+  #grid { width: 100%; display: grid; gap: 10px; touch-action: manipulation; border-radius: 14px; padding: 10px;
+    background: rgba(160,130,95,.14); box-shadow: inset 0 1px 6px rgba(80,55,30,.18); }
+  #grid.ok { animation: ok 260ms ease-out; }
+  @keyframes ok { from { box-shadow: 0 0 0 5px rgba(79,122,58,.55), inset 0 1px 6px rgba(80,55,30,.18); } }
+  #grid button { padding: 0; border: 0; aspect-ratio: 1; min-width: 44px; cursor: pointer;
+    background: #fbf4e6;
+    border-radius: 9px 12px 8px 11px / 11px 8px 12px 9px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.7) inset, 0 2px 0 rgba(120,90,60,.22), 0 3px 8px -3px rgba(80,55,30,.35); }
+  #grid button:active { transform: scale(.97); }
+  #grid button.odd { outline: 4px solid var(--ok); outline-offset: 1px; }
+  #grid button.wrong { outline: 4px solid var(--bad); outline-offset: 1px; }
+  #grid svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  #grid svg .it { filter: url(#rough); }
+
+  /* game over */
+  #over { gap: 22px; }
+  .final { font-size: 120px; line-height: .9; font-weight: 700; font-variation-settings: 'opsz' 144; font-variant-numeric: lining-nums; }
+  .card { padding: 22px 34px 24px; background: var(--tile); border-radius: 18px 22px 16px 24px / 22px 16px 24px 18px;
+    box-shadow: 0 2px 0 rgba(120,90,60,.22), 0 12px 28px -14px rgba(80,55,30,.5); }
+  .card .lab { font-style: italic; color: var(--ink-soft); font-size: 16px; }
+  .card .best { margin-top: 8px; font-size: 18px; }
+  .card .best b { font-size: 22px; }
+  .swash { width: 140px; height: 14px; display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<!-- shared filters: subtle hand-drawn wobble for items (tile units) and for UI chrome (px) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="rough" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="9" numOctaves="2" seed="4" result="t"/>
+    <feDisplacementMap in="SourceGraphic" in2="t" scale="0.014" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="rough-ui" x="-5%" y="-20%" width="110%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="7" result="t"/>
+    <feDisplacementMap in="SourceGraphic" in2="t" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="grain" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="6" numOctaves="2" seed="2" result="n"/>
+    <feColorMatrix in="n" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -.9 .5" result="w"/>
+    <feComposite in="w" in2="SourceGraphic" operator="in" result="wg"/>
+    <feBlend in="SourceGraphic" in2="wg" mode="screen"/>
+  </filter>
+</svg>
+<main>
+  <section id="start" class="screen on">
+    <div class="vignette" aria-hidden="true">
+      <svg viewBox="0 0 1 1">
+        <g filter="url(#rough)">
+          <circle cx=".3" cy=".32" r=".13" fill="#2b5a91"/>
+          <circle cx=".7" cy=".32" r=".13" fill="#2b5a91"/>
+          <circle cx=".3" cy=".7" r=".13" fill="#2b5a91"/>
+          <polygon points=".7,.58 .82,.79 .58,.79" fill="#b8322a"/>
+        </g>
+        <path d="M.52 .92 C .6 .98 .86 .99 .93 .9" fill="none" stroke="#b8322a" stroke-width=".018" stroke-linecap="round" filter="url(#rough)"/>
+      </svg>
+    </div>
+    <h1>Odd<br><em>one</em> out</h1>
+    <p class="lede">Every tile keeps a quiet rule. One of them doesn’t.</p>
+    <button class="big" id="play">Play</button>
+    <p class="howto">Find it before the ink runs dry.</p>
+  </section>
+  <section id="round" class="screen">
+    <div class="hud">
+      <span><span class="lab">score</span><b id="score">0</b></span>
+      <span class="best"><span class="lab">best</span><b id="best1">0</b></span>
+    </div>
+    <div class="bar"><div id="timer"></div></div>
+    <div id="stage"><div id="grid"></div></div>
+  </section>
+  <section id="over" class="screen">
+    <h1>The ink<br><em>ran dry</em></h1>
+    <div class="card">
+      <div class="lab">you found</div>
+      <div class="final"><b id="final">0</b></div>
+      <svg class="swash" viewBox="0 0 140 14" aria-hidden="true"><path d="M4 9 C 40 2, 90 2, 136 8" fill="none" stroke="#b8322a" stroke-width="4" stroke-linecap="round" filter="url(#rough-ui)"/></svg>
+      <p class="best"><span class="lab">best</span> <b id="best2">0</b></p>
+    </div>
+    <button class="big" id="replay">Again</button>
+  </section>
+</main>
+<script type="module">
+import { makeGrid } from '../rules.js';
+import { difficulty } from '../difficulty.js';
+
+const $ = (id) => document.getElementById(id);
+const NS = 'http://www.w3.org/2000/svg';
+// rules.js color tokens -> painterly pigments (each >= 3.9:1 on tile #fbf4e6)
+const PIGMENT = { '#ff0000': '#b8322a', '#0000ff': '#2b5a91', '#008000': '#3d6e3c', '#c05800': '#b5641a', '#800080': '#76407f' };
+
+const LOCK_MS = 250, REVEAL_MS = 600, REPLAY_LOCK_MS = 500;
+let state = 'start', score = 0, grid = null, seed = 1, timeout = 0, readyAt = 0, overAt = 0;
+const now = () => performance.now();
+window.__game = { get state() { return state; }, get breakerIndex() { return grid ? grid.breakerIndex : -1; },
+  get ready() { return state === 'round' && now() >= readyAt; } };
+
+const loadBest = () => { try { return +localStorage.getItem('best') || 0; } catch { return 0; } };
+const saveBest = (v) => { try { localStorage.setItem('best', String(v)); } catch {} };
+
+function show(name) {
+  state = name;
+  for (const s of ['start', 'round', 'over']) $(s).classList.toggle('on', s === name);
+}
+
+function shapeEl({ x, y, shape, color }, r) {
+  let el;
+  if (shape === 'circle') {
+    el = document.createElementNS(NS, 'circle');
+    el.setAttribute('cx', x); el.setAttribute('cy', y); el.setAttribute('r', r);
+  } else if (shape === 'square') {
+    const s = r * 1.6;
+    el = document.createElementNS(NS, 'rect');
+    el.setAttribute('x', x - s / 2); el.setAttribute('y', y - s / 2); el.setAttribute('width', s); el.setAttribute('height', s);
+    el.setAttribute('rx', s * 0.08);
+  } else {
+    el = document.createElementNS(NS, 'polygon');
+    el.setAttribute('points', `${x},${y - r} ${x + r * 0.95},${y + r * 0.7} ${x - r * 0.95},${y + r * 0.7}`);
+    el.setAttribute('stroke-linejoin', 'round');
+  }
+  const pig = PIGMENT[color] || color;
+  el.setAttribute('fill', pig);
+  // darker pigment edge, like watercolor pooling at the rim
+  el.setAttribute('stroke', pig); el.setAttribute('stroke-width', r * 0.1); el.setAttribute('stroke-opacity', '.55');
+  el.setAttribute('class', 'it');
+  return el;
+}
+
+function tileButton(tile, i, r) {
+  const b = document.createElement('button');
+  b.dataset.i = i;
+  b.setAttribute('aria-label', `tile ${i + 1}`);
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 1 1');
+  tile.items.forEach((it) => svg.appendChild(shapeEl(it, r)));
+  b.appendChild(svg);
+  return b;
+}
+
+function nextRound() {
+  clearTimeout(timeout);
+  const { size, variety, rule, seconds, countRange, extraUniques } = difficulty(score + 1, seed);
+  const ROUND_MS = seconds * 1000;
+  grid = makeGrid({ size, variety, rule, countRange, extraUniques });
+  const g = $('grid');
+  g.style.gridTemplateColumns = `repeat(${Math.sqrt(size)}, 1fr)`;
+  g.style.gap = size >= 25 ? '7px' : size >= 16 ? '8px' : '10px';
+  g.replaceChildren(...grid.tiles.map((t, i) => tileButton(t, i, grid.itemR)));
+  $('score').textContent = score;
+  $('best1').textContent = Math.max(score, loadBest());
+  show('round'); // visible before the bar restarts, or the transition never runs
+  readyAt = now() + LOCK_MS; // swallow the second tap of a double tap
+  const bar = $('timer');
+  bar.style.transition = 'none'; bar.style.width = '100%';
+  bar.offsetWidth; // restart the transition
+  bar.style.transition = `width ${ROUND_MS}ms linear`; bar.style.width = '0%';
+  timeout = setTimeout(lose, ROUND_MS);
+}
+
+function lose(wrong) { // show the true odd tile (and the wrong tap) before game over
+  clearTimeout(timeout);
+  state = 'reveal';
+  const bar = $('timer');
+  bar.style.width = getComputedStyle(bar).width; bar.style.transition = 'none';
+  $('grid').children[grid.breakerIndex].classList.add('odd');
+  wrong?.classList.add('wrong');
+  timeout = setTimeout(gameOver, REVEAL_MS);
+}
+
+function gameOver() {
+  overAt = now();
+  const best = Math.max(score, loadBest());
+  saveBest(best);
+  $('final').textContent = score;
+  $('best2').textContent = best;
+  show('over');
+}
+
+$('grid').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b || state !== 'round' || now() < readyAt) return;
+  if (+b.dataset.i !== grid.breakerIndex) return lose(b);
+  score++;
+  const g = $('grid'); g.classList.remove('ok'); g.offsetWidth; g.classList.add('ok');
+  nextRound();
+});
+const start = () => { score = 0; seed = (Math.random() * 2 ** 32) >>> 0; nextRound(); };
+$('play').addEventListener('click', start);
+$('replay').addEventListener('click', () => { if (now() - overAt >= REPLAY_LOCK_MS) start(); });
+</script>
+</body>
+</html>
