@@ -1,0 +1,5 @@
+{
+  "name": "software-factory",
+  "owner": { "name": "Alon" },
+  "plugins": [{ "name": "factory", "source": "./", "description": "Turn an idea into a published product, one stage at a time." }]
+}
