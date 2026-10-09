@@ -1,4 +1,4 @@
-This is a software factory: a reusable workflow that turns an idea into a published product. Products built here are test cases for the workflow.
+This is a general-purpose software factory: a reusable workflow that turns an idea into a published product. This repo holds only the workflow. Every product lives in its own repo.
 
 ## Principles
 1. Every file opens with one plain line saying what it is, and holds only the bare minimum.
@@ -7,7 +7,7 @@ This is a software factory: a reusable workflow that turns an idea into a publis
 4. Checks are proxies. When a check conflicts with the product goal, the goal wins and the check gets fixed.
 
 ## Stages
-1. **Start:** create the product folder with a one-line `README.md`.
+1. **Start:** create the product as its own repo, with a one-line `README.md` and a `CLAUDE.md` that points back to this factory.
 2. **Grill:** one question at a time, each with its purpose and a recommended answer. Every answer goes straight into the product's README, which becomes the spec.
 3. **Plan:** turn the README into `plan.md`, a checklist of thin end-to-end slices with the riskiest one first. Review the plan, not the code.
 4. **Build:** one slice at a time, each by a fresh agent.
