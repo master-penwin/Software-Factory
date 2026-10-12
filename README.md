@@ -14,5 +14,6 @@ Install it in Claude Code with `/plugin marketplace add master-penwin/Software-F
 2. `/factory:grill`: interview the user until the README is the spec.
 3. `/factory:plan`: write thin slices, riskiest first.
 4. `/factory:build`: build, check, review and fix one slice at a time.
-5. `/factory:diverge`: build variants in parallel and pick one.
-6. `/factory:publish`: bundle, test and ship.
+5. `/factory:parallel-build`: build independent slices in parallel, merge, push.
+6. `/factory:diverge`: build variants in parallel and pick one.
+7. `/factory:publish`: bundle, test and ship.
